@@ -5,7 +5,7 @@ import water
 def Bupdate(B,S,Sw,K,Alpha,Beta):
 	d = B* (Alpha *((S - Sw)/(K + S - Sw)) - Beta) if S >= Sw else -B*Beta
 	B = B + d
-	if B<=0.001 :
+	if B<=0.0005 :
 		return 0
 	else:
 		return B
@@ -64,7 +64,7 @@ if __name__ == "__main__":
 
 	#################################################################
 	#这里我们搞几个不同的物种特征，每一个的Gamma， Sw， Rho 在一定范围内浮动？
-	for Num_species in range(1,10):
+	for Num_species in [8]:
 		GammaList = []
 		Gamma = GetGamma(Rho, FL, Em, n, Zr)
 		Beta = GetBeta(R, FL, q)
@@ -73,16 +73,16 @@ if __name__ == "__main__":
 		AlphaList = []
 		AlphamaxList = []
 		for i in range(Num_species):
-			rand = np.random.normal(1,0.01)
-			# rand = 1
-			BList.append(B0/Num_species*np.random.normal(1, 0.3))
+			# rand = np.random.normal(1,0.1)
+			rand = 1
+			BList.append(B0*np.random.normal(1, 0.3))
 			SwList.append(Sw* rand)
 			GammaList.append(Gamma * rand)
 			AlphaList.append(GetConstantAlpha(0.028* rand, Rho, FL, Yg))
 			AlphamaxList.append(0.028*rand*Rho*FL*Yg)
 		###############################################################
 
-		Time = 4000
+		Time = 10000
 		S = S0
 
 		Blist = [BList]
@@ -117,8 +117,8 @@ if __name__ == "__main__":
 			Slist.append(S)
 			Rains.append(I)
 
-		# for i in range(Num_species):
-		#	plt.plot(range(Time+1),[B[i] for B in Blist] , label = 'Type '+str(i))
+		for i in range(Num_species):
+			plt.plot(range(Time+1),[B[i] for B in Blist] , label = 'Type '+str(i))
 		
 		# plt.plot(range(Time + 1), [B[0] for B in Blist],label='Type 1')
 		# plt.plot(range(Time + 1), [B[1] for B in Blist],label='Type 2')
