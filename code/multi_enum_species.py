@@ -7,12 +7,12 @@ def Bupdate(B,S,Sw,K,Alpha,Beta):
 	B = B + d
 	return B
 
-def Supdate(BList, S, I, SwList, K, Ks, c, GammaList):
+def Supdate(BList, S, I, SwList, K, Ks, c, GammaList , n , Zr):
 	Sum = 0
 	for i in range(len(BList)):
 		Sum += BList[i]* (GammaList[i]*(S - SwList[i]) / (K + S - SwList[i])) if S >= SwList[i] else 0
 	Sc = np.power(S, c)
-	d = I - Sum - Ks *Sc 
+	d = (I - Ks *Sc)/(n*Zr) - Sum
 	return S + d
 
 def Alphaupdate(Km, Alpha, Delta):
@@ -38,8 +38,8 @@ def GetConstantAlpha(Am, Rho, FL, Yg):
 	return Am*Rho*FL*Yg
 
 if __name__ == "__main__":
-	B = 2.25
-	S0 = 0.15
+	B0 = 0.5
+	S0 = 0.1
 	n = 0.45#cm
 	Sw = 0.038#cm
 	Ks = 312.77#cm/d
@@ -61,49 +61,67 @@ if __name__ == "__main__":
 
 	#################################################################
 	#这里我们搞几个不同的物种特征，每一个的Gamma， Sw， Rho 在一定范围内浮动？
-	for Num_species in range(1,9):
+	for Num_species in [8]:
 		GammaList = []
 		Gamma = GetGamma(Rho, FL, Em, n, Zr)
 		Beta = GetBeta(R, FL, q)
 		SwList = []
 		BList = []
-		AmList = []
+		AlphaList = []
+		AlphamaxList = []
 		for i in range(Num_species):
 			rand = np.random.normal(1,0.01)
-			BList.append(2.25/Num_species*np.random.normal(1, 0.3))
+			# rand = 1
+			BList.append(B0/Num_species*np.random.normal(1, 0.3))
 			SwList.append(Sw* rand)
 			GammaList.append(Gamma * rand)
-			AmList.append(0.00075* rand)
+			AlphaList.append(GetConstantAlpha(0.028* rand, Rho, FL, Yg))
+			AlphamaxList.append(0.028*rand*Rho*FL*Yg)
 		###############################################################
 
-		Time = 3000
+		Time = 1000
 		S = S0
 
 		Blist = [BList]
+		Alphalist = [AlphaList]
 		Slist = [S]
+		Rains = [0]
 
 		for day in range(Time):
 
-			I = np.random.normal(0.3, 0.01)#cm/d
-			if I < 0:
-				I = 0
-
+			I = np.random.normal(1.5, 0.01)#cm/d
+			if day%5 !=0 :
+				I=0
 			#添加干旱
-			if day%1500 in range(200, 300):
-				I = 0.4 * I
+			#if day in range(300, 500):
+			#	I = 0.2*I
+			
 			newBlist = []
+			newAlphaList = []
+			LastRain = Rains[day]
+			DeltaStar = DeltaStarUpdate(Deltamax,RU,RL,LastRain)
 			for i in range(len(BList)):
-				Alpha = GetConstantAlpha(AmList[i], Rho, FL, Yg)
-				newBlist.append(Bupdate(BList[i],S,SwList[i],k,Alpha,Beta))
-			newS = Supdate(BList, S, I, SwList, k, Ks, c, GammaList)
+				Delta = Deltaupdate(km,AlphaList[i],AlphamaxList[i],DeltaStar)
+				newAlphaList.append(Alphaupdate(km,AlphaList[i],Delta))
+				newBlist.append(Bupdate(BList[i],S,SwList[i],k,newAlphaList[i],Beta))
+			
+			newS = Supdate(BList, S, I, SwList, k, Ks, c, GammaList, n, Zr)
 			BList = newBlist
+			AlphaList = newAlphaList
 			S = newS
 			Blist.append(BList)
+			Alphalist.append(AlphaList)
 			Slist.append(S)
+			Rains.append(I)
 
-		# plt.plot(range(Time + 1), [B[0] for B in Blist])
-		# plt.plot(range(Time + 1), [B[1] for B in Blist])
-		# plt.plot(range(Time + 1), [B[2] for B in Blist])
-		plt.plot(range(Time + 1), [np.sum(B) for B in Blist],label=Num_species)
+		for i in range(Num_species):
+			plt.plot(range(Time+1),[B[i] for B in Blist] , label = 'Type'+str(i))
+		
+		# plt.plot(range(Time + 1), [B[0] for B in Blist],label='Type 1')
+		# plt.plot(range(Time + 1), [B[1] for B in Blist],label='Type 2')
+		# plt.plot(range(Time + 1), [np.sum(B) for B in Blist],label=Num_species)
+		# plt.plot(range(Time + 1), [Alpha[0] for Alpha in Alphalist],label='Alpha')
+		# plt.plot(range(Time + 1), Slist,label='water')
+		# plt.plot(range(Time + 1), Rains,label='Daily Rain')
 	plt.legend()
 	plt.show()
