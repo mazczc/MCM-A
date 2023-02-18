@@ -89,6 +89,7 @@ if __name__ == "__main__":
 	#这里我们搞几个不同的物种特征，每一个的Gamma， Sw， Rho 在一定范围内浮动？
 	for Num_species in [8]:
 		PlantList=[]
+		BList=[]
 		for i in range(Num_species):
 			# rand = np.random.normal(1,0.1)
 			# rand = 1
@@ -99,8 +100,9 @@ if __name__ == "__main__":
 			# AlphaList.append(GetConstantAlpha(0.028* rand, Rho, FL, Yg))
 			# AlphamaxList.append(0.028*rand*Rho*FL*Yg)
 		###############################################################
-
-		Time = 10000
+		for i in range(Num_species):
+			BList.append(PlantList[i].B)
+		Time = 50
 		S = S0
 
 		DayPlantList=[PlantList]
@@ -112,25 +114,26 @@ if __name__ == "__main__":
 			I=GetDayRain(day)
 			LastRain=DayRain[day]
 
-			for plant in PlantList:
-				plant.Alphaupdate(LastRain)
-				plant.Bupdate(S)
+			newPlantList=PlantList
+			for i in range(len(PlantList)):
+				newPlantList[i].Alphaupdate(LastRain)
+				newPlantList[i].Bupdate(S)
 			S=Supdate(PlantList,S,I,c,Ks,n,Zr)
-
+			print([PlantList[i].B for i in range(Num_species)])
+			PlantList=newPlantList
 			DayPlantList.append(PlantList)
 			DayRain.append(I)
 			DayWater.append(S)
 		
+		for day in range(Time+1):
+			print([PlantList[i].B for i in range(Num_species)])
+
 		### output B of each kind of plant
 		for i in range(Num_species):
-			plt.plot(range(Time+1),[plant[i].B for plant in DayPlantList],label='B of Type '+PlantList[i].name)
+			plt.plot(range(Time+1),[plantlist[i].B for plantlist in DayPlantList],label='B of Type '+PlantList[i].name)
 		###
 		### output total B 
-		totalB=[]
-		for day in range(Time+1):
-			totalB.append(np.sum(plant.B) for plant in DayPlantList[day])
-
-		# plt.plot(range(Time + 1),totalB,label='Species = '+str(Num_species))
+		#plt.plot(range(Time + 1),[np.sum(B) for B in DayBList],label='Species = '+str(Num_species))
 		###
 		# plt.plot(range(Time + 1),DayWater,label='water')
 		# plt.plot(range(Time + 1),DayRain,label='Daily Rain')
