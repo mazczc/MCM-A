@@ -1,5 +1,7 @@
 import numpy as np
 
+WATERNEED = 10
+
 def BioStep(Biomass, coeffiencients):
 	#Biomass: 生物量数组，nparray, 依次对应物种i的生物量
 	#coeffiencients: 生物影响关系矩阵，+代表促进，-代表竞争互相挤压
@@ -10,8 +12,9 @@ def WeatherStep(Biomass, Resistence ,Rain):
 	#Biomass: 同上
 	#Resistence: 对应的物种对干旱的抵抗能力
 	#Rain: 当段时间的降水
-	Delta = np.tanh(Rain*Resistence)
-	return BioMass + Delta
+	Delta = np.tanh((Rain*Resistence - np.sum(Biomass) * 10)* 0.01)
+	print(Delta)
+	return Biomass + Delta
 
 class Environment:
 	def __init__(self,num_species,species, coeffiencients):
@@ -60,19 +63,21 @@ def SigalDrought(ExpRain, VarRain, T, DroughtStart,DroughtEnd):
 if __name__ == "__main__":
 	EXP = 792
 	VAR = 10 
-	T = 10
-	START = 12
-	END = 20
+	T = 20
+	START = 100
+	END = 100
 	Rain = SigalDrought(EXP,VAR,T, START, END)
 
-	BioMass = np.array([1,1,1])
-	Res = np.array([0.1, 0.2, 0.5])
-	Coe = np.array([[0,1,1], [1,0,1], [1,1,0]])
+	BioMass = np.array([10,10,10])
+	Process = [BioMass]
+	Res = np.array([0.3, 0.45, 0.5])
+	Coe = np.array([[0,0.05,-0.1], [0.05,0,0.05], [-0.01,0.05,0]])
 
 	for i in range(T):
 		BioMass = BioStep(BioMass, Coe)
 		BioMass = WeatherStep(BioMass, Res, Rain[i])
+		Process.append(BioMass)
 
-	print(BioMass)
+	print(np.array(Process))
 
 	
