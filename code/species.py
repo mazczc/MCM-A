@@ -31,34 +31,49 @@ Beta = GetBeta(R, FL, q)
 AlphaBase = GetConstantAlpha(0.028, Rho, FL, Yg)
 
 class species:
-	def __init__(self, Alpha0, Sw, Gamma, Beta):
+	def __init__(self, Alpha0, Sw, Gamma, Beta, km, RU, RL):
 		self.Alpha = Alpha0
 		self.Sw = Sw
 		self.Beta = Beta
 		self.Gamma = Gamma
-
+		self.km = km
+		self.RU = RU
+		self.RL = RL
 
 #####################################################
 #这里可以任意添加新的物种进去，目前只有几个奇形怪状的东西
 #####################################################
+print(AlphaBase, Sw, Gamma0, Beta)
 species_dic = {}
 for i in range(10):
-	s = species(AlphaBase* (i*0.1 + 0.5), Sw* (i*0.1 + 0.5), Gamma0* (i*0.1 + 0.5), Beta* (i*0.1 + 0.5))
+	s = species(AlphaBase* (i*0.1 + 0.5), Sw* (i*0.1 + 0.5), Gamma0* (i*0.1 + 0.5), Beta* (i*0.1 + 0.5), 0.5 + i*0.05, 1.5 + i*0.1, i * 0.1)
 	species_dic[i] = s
 
-Species = [2,5, 7]
+s = species(1.0, 0.01, 0.20, 0.002, 0.85, 2.0, 0.1)
+species_dic["Xiao Qiang"] = s
+
+s = species(2.0, 0.1, 1, 0.02, 0.4, 3.0, 0.1)
+species_dic["Zhang"] = s
+
+Species = [2]
 GammaList = []
 SwList0 = []
 BList0 = []
 AlphaList0 = []
 AlphamaxList = []
+RLlist = []
+RUlist = []
+kmlist = []
 for choice in Species:
 	# rand = 1
-	BList0.append(B0/len(Species)*np.random.normal(1, 1))
+	BList0.append(B0)#np.random.normal(1, 0.3))
 	SwList0.append(species_dic[choice].Sw)
 	GammaList.append(species_dic[choice].Gamma)
 	AlphaList0.append(species_dic[choice].Alpha)
 	AlphamaxList.append(Alphamax)
+	RLlist.append(species_dic[choice].RL)
+	RUlist.append(species_dic[choice].RU)
+	kmlist.append(species_dic[choice].km)
 ###############################################################
 S = S0
 BList = BList0
@@ -70,10 +85,10 @@ AlphalistDrought = [AlphaList]
 SlistDrought = [S]
 Rains = [0]
 
-Time = 2000
-DStart = 700
-DEnd = 750
-I = [np.random.normal(1.5, 0.01) for i in range(Time)]
+Time = 5000
+DStart = 2000
+DEnd = 2050
+I = [np.random.normal(1.5, 0) for i in range(Time)]
 
 for day in range(Time):
 	Rain = I[day]
@@ -89,10 +104,11 @@ for day in range(Time):
 	newBlist = []
 	newAlphaList = []
 	LastRain = Rains[day]
-	DeltaStar = DeltaStarUpdate(Deltamax,RU,RL,LastRain)
+	
 	for i in range(len(BList)):
-		Delta = Deltaupdate(km,AlphaList[i],AlphamaxList[i],DeltaStar)
-		newAlphaList.append(Alphaupdate(km,AlphaList[i],Delta))
+		DeltaStar = DeltaStarUpdate(Deltamax,RUlist[i],RLlist[i],LastRain)
+		Delta = Deltaupdate(kmlist[i],AlphaList[i],AlphamaxList[i],DeltaStar)
+		newAlphaList.append(Alphaupdate(kmlist[i],AlphaList[i],Delta))
 		newBlist.append(Bupdate(BList[i],S,SwList[i],k,newAlphaList[i],Beta))
 	
 	newS = Supdate(BList, S, Rain, SwList, k, Ks, c, GammaList, n, Zr)
@@ -116,11 +132,6 @@ AlphalistNormal = [AlphaList]
 SlistNormal = [S]
 Rains = [0]
 
-Time = 2000
-DStart = 700
-DEnd = 750
-I = [np.random.normal(1.5, 0.01) for i in range(Time)]
-
 for day in range(Time):
 	Rain = I[day]
 	#cm/d
@@ -135,12 +146,12 @@ for day in range(Time):
 	newBlist = []
 	newAlphaList = []
 	LastRain = Rains[day]
-	DeltaStar = DeltaStarUpdate(Deltamax,RU,RL,LastRain)
 	for i in range(len(BList)):
-		Delta = Deltaupdate(km,AlphaList[i],AlphamaxList[i],DeltaStar)
-		newAlphaList.append(Alphaupdate(km,AlphaList[i],Delta))
+		DeltaStar = DeltaStarUpdate(Deltamax,RUlist[i],RLlist[i],LastRain)
+		Delta = Deltaupdate(kmlist[i],AlphaList[i],AlphamaxList[i],DeltaStar)
+		newAlphaList.append(Alphaupdate(kmlist[i],AlphaList[i],Delta))
 		newBlist.append(Bupdate(BList[i],S,SwList[i],k,newAlphaList[i],Beta))
-	
+
 	newS = Supdate(BList, S, Rain, SwList, k, Ks, c, GammaList, n, Zr)
 	BList = newBlist
 	AlphaList = newAlphaList
@@ -155,6 +166,7 @@ plt.plot(range(Time + 1), [np.sum(B) for B in BlistNormal],label='Normal'+ str(S
 Resistent = (np.sum(BlistNormal[DEnd]) - np.sum(BlistDrought[DEnd])) /np.sum(BlistNormal[DEnd])
 Recover = (np.sum(BlistNormal[DEnd + 100]) - np.sum(BlistDrought[DEnd + 100])) /np.sum(BlistNormal[DEnd + 100])
 print("Resistent:", Resistent, ",Recover:", Recover)
+print(AlphaList)
 
 plt.legend()
 plt.show()
