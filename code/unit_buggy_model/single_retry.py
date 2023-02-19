@@ -41,8 +41,8 @@ def GetConstantAlpha(Am, Rho, FL, Yg):
 
 if __name__ == "__main__":
     ### 基准参数设置
-    B0 = 0.5
-    S0 = 0.1
+    B0 = 10
+    S0 = 0.2
     n = 0.45#cm
     Sw = 0.038#cm
     Ks = 312.77#cm/d
@@ -79,6 +79,7 @@ if __name__ == "__main__":
     BlistDrought = [B]
     AlphalistDrought = [Alpha]
     SlistDrought = [S]
+    RainDrought = [0]
     LastRain = 0
 
     for day in range(Time):
@@ -90,7 +91,7 @@ if __name__ == "__main__":
         ###
         #添加干旱
         if day in range(DStart, DEnd):
-            Rain = 0.2*Rain
+            Rain = 0.2*I[day]
         
         ### 单次更新计算
         DeltaStar = DeltaStarUpdate(Deltamax,RU,RL,LastRain)
@@ -108,6 +109,7 @@ if __name__ == "__main__":
         BlistDrought.append(B)
         AlphalistDrought.append(Alpha)
         SlistDrought.append(S)
+        RainDrought.append(Rain)
         LastRain = Rain
 
     ###
@@ -120,6 +122,7 @@ if __name__ == "__main__":
     BlistNormal = [B]
     AlphalistNormal = [Alpha]
     SlistNormal = [S]
+    RainNormal = [0]
     LastRain = 0
 
     for day in range(Time):
@@ -141,14 +144,15 @@ if __name__ == "__main__":
         BlistNormal.append(B)
         AlphalistNormal.append(Alpha)
         SlistNormal.append(S)
+        RainNormal.append(Rain)
         LastRain = Rain
     
     
     ### 借助比对，计算抵抗力稳定性和恢复力稳定性
-    ### 目前：Resistent 越大，抵抗力越好
-    ### Recover 越大，恢复力越好
-    Resistent = 1/((np.sum(BlistNormal[DEnd]) - np.sum(BlistDrought[DEnd])) /np.sum(BlistNormal[DEnd]))
-    Recover = 1/((np.sum(BlistNormal[DEnd + 100]) - np.sum(BlistDrought[DEnd + 100])) /np.sum(BlistNormal[DEnd + 100]))
+    ### 目前：Resistent 越大，抵抗力越差
+    ### Recover 越大，恢复力越差
+    Resistent = (np.sum(BlistNormal[DEnd]) - np.sum(BlistDrought[DEnd])) /np.sum(BlistNormal[DEnd])
+    Recover = (np.sum(BlistNormal[DEnd + 100]) - np.sum(BlistDrought[DEnd + 100])) /np.sum(BlistNormal[DEnd + 100])
     print("Resistent:", Resistent, ",Recover:", Recover)
     ###
 
@@ -157,8 +161,14 @@ if __name__ == "__main__":
     
     # plt.plot(range(Time + 1), [B[0] for B in Blist],label='Type 1')
     # plt.plot(range(Time + 1), [B[1] for B in Blist],label='Type 2')
-    plt.plot(range(Time + 1), [np.sum(B) for B in BlistNormal],label='Normal')
-    plt.plot(range(Time + 1), [np.sum(B) for B in BlistDrought], label = 'Drought')
+    plt.plot(range(Time + 1), [np.sum(B) for B in BlistNormal],label='Normal Bio')
+    plt.plot(range(Time + 1), [np.sum(B) for B in BlistDrought], label = 'Drought Bio')
+    # plt.plot(range(Time + 1), RainNormal,label='Normal Rain')
+    # plt.plot(range(Time + 1), RainDrought, label = 'Drought Rain')
+    plt.plot(range(Time + 1), SlistNormal,label='Normal S')
+    plt.plot(range(Time + 1), SlistDrought, label = 'Drought S')
+    plt.plot(range(Time + 1), AlphalistNormal,label='Normal Alpha')
+    plt.plot(range(Time + 1), AlphalistDrought, label = 'Drought Alpha')
     # plt.plot(range(Time + 1), [Alpha[0] for Alpha in Alphalist],label='Alpha')
     # plt.plot(range(Time + 1), Slist,label='water')
     # plt.plot(range(Time + 1), Rains,label='Daily Rain')
